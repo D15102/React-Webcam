@@ -10,7 +10,9 @@ const App = () => {
   const canvasRef = useRef(null);
   const webcamRef1 = useRef(null);
   const canvasRef1 = useRef(null);
-  const [cameraMode, setCameraMode] = useState("user"); // Rear by default
+  const [cameraMode, setCameraMode] = useState("user"); 
+  const [isLoading, setisLoading] = useState(false)
+
 
   const runCoco = async () => {
     await tf.setBackend("webgl");
@@ -39,12 +41,14 @@ const App = () => {
     }
   };
 
-  const runHandPose = async () => {
+  const runHandPose = async () =>   {
+    setisLoading(true)
     await tf.setBackend("webgl");
     await tf.ready();
     console.log("Loading handpose model...");
     const net = await handpose.load();
     console.log("Handpose model loaded ✅");
+    setisLoading(false)
     setInterval(() => {
       detect1(net);
     }, 100);
@@ -67,7 +71,7 @@ const App = () => {
         canvasRef1.current.height = videoHeight;
 
         const hands = await net.estimateHands(video);
-        console.log(hands)
+        // console.log(hands)
         const ctx = canvasRef1.current.getContext("2d");
         drawHands(hands, ctx);
       }
@@ -83,9 +87,14 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center gap-8 p-4">
-      <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+      <h1 className={`text-2xl text-white font-bold mb-4`}>
         TensorFlow.js Hand Detection
       </h1>
+      <h2 className="text-2xl font-bold mb-4 text-white">
+        {
+          isLoading ? "Loading HandPose Model" : "Handpose model loaded ✅"
+        }
+      </h2>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* COCO SSD Section */}
@@ -147,7 +156,8 @@ const App = () => {
         onClick={() =>
           setCameraMode((prev) => (prev === "user" ? "environment" : "user"))
         }
-        className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow transition"
+        className="px-6 py-2 disabled:cursor-not-allowed disabled:bg-blue-500 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow transition"
+        disabled={isLoading}
       >
         Toggle Camera ({cameraMode === "user" ? "Front" : "Rear"})
       </button>
